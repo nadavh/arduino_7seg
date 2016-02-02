@@ -1,0 +1,57 @@
+#!/bin/bash
+
+function usage()
+{
+	local cmd="$(basename $0)"
+	cat <<-EOF
+		Usage: $cmd <option> [value] [value]
+		   Options:
+		       clear	-	Clear LCD
+		       1d	-	Set one digit
+		       2d	-	Set two digits
+		       4d	-	Set four digits
+		       x	-	Set extra lights
+
+		   Examples:
+		      $cmd 1d 0 3	- set the fist digit to 3
+		      $cmd 2d 2 '-9'	- set the second couple to -9
+		      $cmd 4d 1234	- set display to 12 34
+		      $cmd x 1 1 	- Turn the second extra light on
+	EOF
+	exit 1
+}
+
+function main()
+{
+	case $# in
+		1)
+			if [ "$1" == "clear" ]; then
+				qdbus MyStuff.LCD / LEDs.Display.clear >/dev/null
+			else
+				usage
+			fi
+			;;
+		2)
+			if [ "$1" == "4d" ]; then
+				qdbus MyStuff.LCD / LEDs.Display.set4Digits "$2"  >/dev/null
+			else
+				usage
+			fi
+			;;
+		3)
+			case $1 in
+				'1d')	qdbus MyStuff.LCD / LEDs.Display.setDigit "$2" "$3" >/dev/null;;
+				'2d')	qdbus MyStuff.LCD / LEDs.Display.set2Digits "$2" "$3" >/dev/null;;
+				'x')	qdbus MyStuff.LCD / LEDs.Display.setExtraLED "$2" "$3" >/dev/null;;
+				*)	usage;;
+			esac
+			;;
+		*)
+			usage
+			;;
+	esac
+	qdbus MyStuff.LCD / LEDs.Display.updateDisplay  >/dev/null
+}
+
+main "$@"
+
